@@ -1,0 +1,28 @@
+package com.ylz.framework.example.interfaces.controller;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import com.ylz.framework.application.user.command.CreateCommand;
+import com.ylz.framework.application.user.dto.UserDTO;
+
+@RequestMapping("/api/v1/users")
+public interface UserController {
+
+    @PostMapping
+    ResponseEntity<UserDTO> createUser(@RequestBody CreateCommand command);
+
+    @PutMapping("/{userId}/nickname")
+    ResponseEntity<Void> updateNickname(
+            @PathVariable String userId,
+            @RequestParam String newNickname);
+
+    @GetMapping("/{userId}")
+    ResponseEntity<UserDTO> getUser(@PathVariable String userId);
+}

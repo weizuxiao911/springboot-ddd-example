@@ -1,0 +1,38 @@
+spring:
+  # 数据源配置
+  datasource:
+    url: jdbc:mysql://localhost:3306/test?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: root
+    password: P@ssw0rd
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    
+    # Hikari 连接池配置（Spring Boot 默认）
+    hikari:
+      maximum-pool-size: 10  # 最大连接数
+      minimum-idle: 5        # 最小空闲 连接数
+      idle-timeout: 300000   # 连接空闲超时时间（5分钟）
+      connection-timeout: 20000  # 连接超时时间（20秒）
+      max-lifetime: 1800000   # 连接最大生命周期（30分钟）
+
+  # JPA 配置
+  jpa:
+    # 数据库方言（根据数据库类型选择）
+    # database-platform: org.hibernate.dialect.MySQL8Dialect
+    
+    # Hibernate 配置
+    # hibernate:
+      # ddl-auto: update  # 自动建表策略（create/create-drop/update/validate/none）
+      # naming:
+        # physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl  # 保持字段名与实体类一致
+        # 若需要下划线命名法，可替换为：
+        # physical-strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
+    
+    # 显示 SQL 语句（开发环境使用）
+    show-sql: true
+    # 格式化 SQL 输出
+    properties:
+      hibernate:
+        format_sql: true
+        # 日志级别（可选，控制 SQL 日志详细程度）
+        # jdbc.batch_size: 30  # 批量操作大小
+        # order_inserts: true  # 优化批量插入顺序

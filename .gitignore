@@ -1,0 +1,16 @@
+/target/
+*/target/
+.settings
+.project
+*/.settings
+*/.project
+*.classpath
+*.log
+/.idea
+*/*.iml
+.DS_Store*
+*.iml
+logs/*
+/*/logs/
+.flattened-pom.xml
+.vscode/
