@@ -11,7 +11,7 @@
     </parent>
 
     <groupId>com.ylz.framework.example</groupId>
-    <artifactId>interfaces</artifactId>
+    <artifactId>api</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 
     <dependencies>

@@ -1,35 +1,31 @@
-package com.ylz.framework.example.service;
+package com.ylz.framework.application.impl;
 
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import com.ylz.framework.application.user.UserAppService;
-import com.ylz.framework.application.user.command.CreateCommand;
-import com.ylz.framework.application.user.command.UpdateNickanmeCommand;
-import com.ylz.framework.application.user.dto.UserDTO;
+import com.ylz.framework.application.converter.UserConverter;
+import com.ylz.framework.application.dto.CreateUserRequest;
+import com.ylz.framework.application.dto.UpdateNickanmeRequest;
+import com.ylz.framework.application.dto.UserResponse;
+import com.ylz.framework.application.service.UserAppService;
 import com.ylz.framework.domain.user.User;
 import com.ylz.framework.domain.user.UserId;
 import com.ylz.framework.domain.user.UserRepository;
-import com.ylz.framework.example.interfaces.converter.UserConverter;
 
-@Service
-@Transactional
 public class UserAppServiceImpl implements UserAppService {
 
     private final UserRepository userRepository;
 
-    public UserAppServiceImpl(UserRepository userRepository) {
+    public UserAppServiceImpl(final UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
+
     @Override
-    public UserDTO getUserById(String userId) {
+    public UserResponse getUserById(String userId) {
         User user = this.userRepository.findById(new UserId(userId));
         return UserConverter.toDTO(user);
     }
 
     @Override
-    public UserDTO createUser(CreateCommand command) {
+    public UserResponse createUser(CreateUserRequest command) {
         // 1. 根据命令创建领域对象
         User user = new User(
                 UserId.generate(),
@@ -46,7 +42,7 @@ public class UserAppServiceImpl implements UserAppService {
     }
 
     @Override
-    public void updateUserNickname(UpdateNickanmeCommand command) {
+    public void updateUserNickname(UpdateNickanmeRequest command) {
         // 1. 转换参数（DTO → 领域对象）
         UserId userId = new UserId(command.userId());
         // 2. 调用领域逻辑

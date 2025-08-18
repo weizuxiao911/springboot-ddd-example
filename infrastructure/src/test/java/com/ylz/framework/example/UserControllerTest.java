@@ -4,8 +4,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import com.ylz.framework.application.user.command.CreateCommand;
-import com.ylz.framework.example.interfaces.controller.UserController;
+import com.ylz.framework.application.dto.CreateUserRequest;
+import com.ylz.framework.example.api.controller.UserController;
 
 @SpringBootTest
 public class UserControllerTest {
@@ -15,7 +15,7 @@ public class UserControllerTest {
 
     @Test
     void testCreateUser() {
-        CreateCommand command = new CreateCommand("测试", "");
+        CreateUserRequest command = new CreateUserRequest("测试", "");
         userController.createUser(command);
     }
     

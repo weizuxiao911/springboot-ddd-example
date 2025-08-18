@@ -18,7 +18,7 @@
 
         <dependency>
             <groupId>com.ylz.framework.example</groupId>
-            <artifactId>interfaces</artifactId>
+            <artifactId>api</artifactId>
             <version>${project.version}</version>
         </dependency>
 

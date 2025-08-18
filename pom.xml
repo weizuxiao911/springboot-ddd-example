@@ -12,7 +12,7 @@
     <modules>
         <module>domain</module>
         <module>application</module>
-        <module>interfaces</module>
+        <module>api</module>
         <module>infrastructure</module>
     </modules>
 

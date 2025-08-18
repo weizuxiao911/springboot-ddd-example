@@ -6,11 +6,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import com.ylz.framework.application.user.UserAppService;
-import com.ylz.framework.application.user.command.CreateCommand;
-import com.ylz.framework.application.user.command.UpdateNickanmeCommand;
-import com.ylz.framework.application.user.dto.UserDTO;
-import com.ylz.framework.example.interfaces.controller.UserController;
+import com.ylz.framework.application.dto.CreateUserRequest;
+import com.ylz.framework.application.dto.UpdateNickanmeRequest;
+import com.ylz.framework.application.dto.UserResponse;
+import com.ylz.framework.application.service.UserAppService;
+import com.ylz.framework.example.api.controller.UserController;
 
 @RestController
 public class UserControllerImpl implements UserController {
@@ -23,9 +23,9 @@ public class UserControllerImpl implements UserController {
     }
 
     @Override
-    public ResponseEntity<UserDTO> createUser(CreateCommand command) {
+    public ResponseEntity<UserResponse> createUser(CreateUserRequest command) {
         // 1. 调用应用服务创建用户（业务逻辑在服务层实现）
-        UserDTO createdUser = userAppService.createUser(command);
+        UserResponse createdUser = userAppService.createUser(command);
 
         // 2. 构建创建资源的URI（符合REST规范）
         URI location = ServletUriComponentsBuilder
@@ -40,12 +40,12 @@ public class UserControllerImpl implements UserController {
 
     @Override
     public ResponseEntity<Void> updateNickname(String userId, String newNickname) {
-        userAppService.updateUserNickname(new UpdateNickanmeCommand(userId, newNickname));
+        userAppService.updateUserNickname(new UpdateNickanmeRequest(userId, newNickname));
         return ResponseEntity.ok().build();
     }
 
     @Override
-    public ResponseEntity<UserDTO> getUser(String userId) {
+    public ResponseEntity<UserResponse> getUser(String userId) {
         return ResponseEntity.ok(userAppService.getUserById(userId));
     }
 

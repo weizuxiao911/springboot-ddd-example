@@ -1,11 +1,11 @@
-package com.ylz.framework.application.user.dto;
+package com.ylz.framework.application.dto;
 
 /**
  * 用户DTO
  * 
  * @author weizuxiao
  */
-public record UserDTO(
+public record UserResponse(
                 String userId,
                 String nickname,
                 String avatar) {
