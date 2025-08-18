@@ -99,3 +99,273 @@ infrastructure → application → domain
 3. 事务注解`@Transactional`仅在基础设施层的“应用服务适配器”上使用，控制业务流程的事务边界。
 4. 领域层禁止引入任何框架注解（如 JPA 的`@Entity`应放在基础设施层的数据库实体类上）。
 5. 应用层的核心逻辑需独立于 Spring 实现，基础设施层仅通过“适配器”模式添加技术注解（如`@Service`）。
+
+
+#### 六、领域模型定义及应用  
+
+领域模型是DDD的核心，通过**值对象、实体、聚合根、领域服务、领域事件**等概念封装业务规则，确保业务逻辑的内聚性和一致性。以下是各模型的定义、应用场景及实现示例：  
+
+##### 1. 值对象（Value Object）  
+
+- **定义**：无唯一标识（ID）的对象，通过属性值描述一个不可变的概念（如“地址”、“金额”），属性值相等即视为相同对象。  
+- **核心特征**：不可变性（创建后属性不可修改）、属性相等性（重写`equals()`和`hashCode()`）、无生命周期管理。  
+- **应用场景**：封装多个关联属性（如用户的收货地址、订单的金额与币种）。  
+
+**示例**：  
+
+```java
+// 领域层：值对象（地址）
+public class Address {
+    private final String province; // 不可变，用final修饰
+    private final String city;
+    private final String detail;
+
+    // 构造器初始化所有属性，无setter方法
+    public Address(String province, String city, String detail) {
+        // 校验属性合法性（体现业务规则）
+        if (StringUtils.isEmpty(province)) {
+            throw new IllegalArgumentException("省份不能为空");
+        }
+        this.province = province;
+        this.city = city;
+        this.detail = detail;
+    }
+
+    // 重写equals和hashCode，基于属性值判断相等性
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Address address = (Address) o;
+        return Objects.equals(province, address.province) &&
+                Objects.equals(city, address.city) &&
+                Objects.equals(detail, address.detail);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(province, city, detail);
+    }
+}
+```  
+
+##### 2. 实体（Entity）  
+
+- **定义**：有唯一标识（ID）的对象，通过ID区分不同实例，属性可修改，具有独立的生命周期（如“用户”、“商品”）。  
+- **核心特征**：唯一标识（ID）、可变性（属性可修改）、生命周期管理（创建、更新、删除）、包含业务行为。  
+- **应用场景**：需要跟踪变化的核心业务对象（如用户的基本信息、商品的库存）。  
+
+**示例**：  
+
+```java
+// 领域层：实体（用户的收货地址实体，需独立更新）
+public class UserAddress {
+    private final Long id; // 唯一标识
+    private Long userId; // 关联用户ID
+    private Address address; // 关联值对象（地址）
+    private boolean isDefault; // 是否默认地址
+
+    // 构造器：创建时必须指定ID和核心属性
+    public UserAddress(Long id, Long userId, Address address) {
+        this.id = id;
+        this.userId = userId;
+        this.address = address;
+    }
+
+    // 业务行为：设置为默认地址（封装业务规则）
+    public void setAsDefault() {
+        this.isDefault = true;
+    }
+
+    // 业务行为：更新地址信息（属性可修改）
+    public void updateAddress(Address newAddress) {
+        this.address = newAddress; // 替换值对象（值对象不可变，直接替换）
+    }
+
+    // 仅暴露getter，避免外部直接修改属性
+    public Long getId() { return id; }
+    public boolean isDefault() { return isDefault; }
+}
+```  
+
+
+##### 3. 聚合根（Aggregate Root）  
+
+- **定义**：聚合（一组关联对象）的根节点，是聚合对外的唯一入口，负责维护聚合内对象的一致性，包含聚合内的实体和值对象。  
+- **核心特征**：唯一标识（ID）、管理聚合内对象的生命周期、封装聚合内的业务规则、通过仓储（Repository）持久化。  
+- **应用场景**：代表一个完整的业务概念（如“订单”聚合包含订单头、订单项、收货地址等）。  
+
+**示例**：  
+
+```java
+// 领域层：聚合根（订单）
+public class Order {
+    private final Long id; // 聚合根唯一标识
+    private Long userId;
+    private List<OrderItem> items; // 聚合内实体（订单项）
+    private Address shippingAddress; // 聚合内值对象（收货地址）
+    private OrderStatus status; // 订单状态（枚举）
+    private LocalDateTime createTime;
+
+    // 构造器：创建订单时初始化聚合根及内部对象
+    public Order(Long id, Long userId, List<OrderItem> items, Address shippingAddress) {
+        this.id = id;
+        this.userId = userId;
+        this.items = items;
+        this.shippingAddress = shippingAddress;
+        this.status = OrderStatus.CREATED;
+        this.createTime = LocalDateTime.now();
+    }
+
+    // 业务行为：添加订单项（确保聚合内一致性）
+    public void addItem(OrderItem item) {
+        if (this.status != OrderStatus.CREATED) {
+            throw new IllegalStateException("只有未支付的订单可添加商品"); // 业务规则
+        }
+        this.items.add(item);
+    }
+
+    // 业务行为：订单支付（状态流转规则）
+    public void pay() {
+        if (this.status != OrderStatus.CREATED) {
+            throw new IllegalStateException("只有创建状态的订单可支付");
+        }
+        this.status = OrderStatus.PAID;
+    }
+
+    // 仅暴露必要的getter，聚合内对象通过业务行为操作
+    public Long getId() { return id; }
+    public OrderStatus getStatus() { return status; }
+}
+
+// 聚合内实体（订单项）
+class OrderItem {
+    private Long productId;
+    private int quantity;
+    private BigDecimal price;
+
+    // 构造器和业务行为...
+}
+```  
+
+
+##### 4. 领域服务（Domain Service）  
+
+- **定义**：处理跨实体/聚合的业务逻辑，当业务规则无法归属到单个实体或聚合根时，由领域服务协调完成。  
+- **核心特征**：无状态（不保存数据）、依赖领域对象（实体/聚合根）、封装跨对象的业务规则。  
+- **应用场景**：需要多个实体/聚合协作的业务逻辑（如“用户注册时检查手机号唯一性”、“订单支付时扣减库存”）。  
+
+**示例**：  
+
+```java
+// 领域层：领域服务（订单支付领域服务，跨订单和库存聚合）
+public class OrderPaymentService {
+    // 依赖其他聚合的仓储接口（通过依赖注入）
+    private final OrderRepository orderRepository;
+    private final InventoryRepository inventoryRepository;
+
+    public OrderPaymentService(OrderRepository orderRepository, InventoryRepository inventoryRepository) {
+        this.orderRepository = orderRepository;
+        this.inventoryRepository = inventoryRepository;
+    }
+
+    // 业务逻辑：支付订单并扣减库存（跨聚合协作）
+    public void payOrder(Long orderId) {
+        // 1. 获取订单聚合根
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("订单不存在"));
+        
+        // 2. 校验订单状态（调用聚合根的业务行为）
+        order.pay(); // 订单状态流转为“已支付”
+        
+        // 3. 扣减库存（跨聚合操作）
+        for (OrderItem item : order.getItems()) {
+            Inventory inventory = inventoryRepository.findByProductId(item.getProductId());
+            inventory.deduct(item.getQuantity()); // 调用库存实体的扣减行为
+            inventoryRepository.save(inventory);
+        }
+        
+        // 4. 保存订单状态
+        orderRepository.save(order);
+    }
+}
+```  
+
+
+##### 5. 领域事件（Domain Event）  
+
+- **定义**：当领域中发生重要业务事件时，由领域对象发布的事件，用于通知其他模块或系统（如“订单创建成功”、“支付完成”）。  
+- **核心特征**：记录事件发生的时间和相关数据、由领域对象主动发布、可被事件监听器处理。  
+- **应用场景**：实现跨模块/系统的解耦通信（如订单创建后发送通知、支付完成后触发物流）。  
+
+**示例**：  
+
+```java
+// 领域层：领域事件（订单创建事件）
+public class OrderCreatedEvent {
+    private final Long orderId;
+    private final Long userId;
+    private final LocalDateTime createTime;
+
+    public OrderCreatedEvent(Long orderId, Long userId) {
+        this.orderId = orderId;
+        this.userId = userId;
+        this.createTime = LocalDateTime.now();
+    }
+
+    // getter...
+}
+
+// 聚合根中发布事件
+public class Order {
+    // 其他属性和方法...
+
+    // 构造器：创建订单时发布事件
+    public Order(Long id, Long userId, List<OrderItem> items, Address shippingAddress) {
+        // 初始化逻辑...
+        // 发布事件（通过事件发布器，由基础设施层实现）
+        DomainEventPublisher.publish(new OrderCreatedEvent(id, userId));
+    }
+}
+
+// 基础设施层：事件发布器实现（依赖Spring事件机制）
+@Component
+public class DomainEventPublisher {
+    private static ApplicationEventPublisher springPublisher;
+
+    // 注入Spring的事件发布器
+    public DomainEventPublisher(ApplicationEventPublisher publisher) {
+        DomainEventPublisher.springPublisher = publisher;
+    }
+
+    // 发布领域事件
+    public static void publish(DomainEvent event) {
+        springPublisher.publishEvent(event);
+    }
+}
+
+// 事件监听器（基础设施层或应用层）
+@Component
+public class OrderCreatedListener {
+    @EventListener
+    public void handleOrderCreated(OrderCreatedEvent event) {
+        // 处理事件：如发送短信通知、创建物流单等
+        System.out.println("订单" + event.getOrderId() + "创建成功，用户ID：" + event.getUserId());
+    }
+}
+```  
+
+
+##### 6. 领域模型的协作关系  
+
+- **聚合根**是领域模型的核心，通过ID关联其他实体和值对象，对外提供业务行为；  
+- **实体**通过ID独立存在，可属于某个聚合，也可单独作为聚合根；  
+- **值对象**依附于实体或聚合根，通过属性描述特征，无独立生命周期；  
+- **领域服务**协调多个聚合或实体完成跨边界的业务逻辑；  
+- **领域事件**实现领域模型间的解耦通信，触发后续业务流程。  
+
+##### 7. 其他说明
+
+- **聚合根**对外提供业务行为，这个“外”是指聚合边界之外，比如同个领域层下的其他聚合或应用层。
+- 应用层可访问**聚合根实体**，但禁止直接访问**非聚合根的普通实体**，普通实体需**通过所属聚合根访问**。
+
