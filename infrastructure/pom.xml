@@ -4,28 +4,33 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>com.ylz.framework</groupId>
+        <groupId>com.ylz.springframework</groupId>
         <artifactId>parent</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <relativePath />
     </parent>
 
-    <groupId>com.ylz.framework.example</groupId>
-    <artifactId>infrastructure</artifactId>
+    <groupId>com.ylz.example</groupId>
+    <artifactId>ylz-example-infrastructure</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 
     <dependencies>
 
         <dependency>
-            <groupId>com.ylz.framework.example</groupId>
-            <artifactId>api</artifactId>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.ylz.example</groupId>
+            <artifactId>ylz-example-api</artifactId>
             <version>${project.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
-            <scope>runtime</scope>
+
         </dependency>
 
         <dependency>
@@ -49,7 +54,7 @@
             <scope>test</scope>
         </dependency>
 
-         <dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-test</artifactId>
             <scope>test</scope>

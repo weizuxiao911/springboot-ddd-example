@@ -4,11 +4,12 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.ylz.framework</groupId>
-    <artifactId>example</artifactId>
+    <groupId>com.ylz.example</groupId>
+    <artifactId>ylz-example-project</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
+    <!-- 注意编译顺序：domain → application → api → infrastructure -->
     <modules>
         <module>domain</module>
         <module>application</module>
